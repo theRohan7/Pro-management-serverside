@@ -13,11 +13,11 @@ const router = Router();
 
 //secured routes
 
+router.route('/filter-tasks').get(verifyJWT, filterTasks);
 router.route('/create-task').post(verifyJWT, createTask);
 router.route('/update-taskStatus').post(verifyJWT, changeTaskStatus);
 router.route('/edit-task/:taskId').post(verifyJWT, editTask);
 router.route('/delete-task').post(verifyJWT, deleteTask);
-router.route('/filter-tasks').post(verifyJWT, filterTasks);
 
 
 

@@ -3,6 +3,7 @@ import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { Task } from "../models/tasks.model.js";
 import { User } from "../models/user.model.js";
+import moment from "moment";
 
 
 const createTask = asyncHandler(async (req, res) => {
@@ -265,10 +266,42 @@ const  editTask = asyncHandler(async (req, res) => {
  })
 
  const filterTasks = asyncHandler(async (req, res) => {
-    const  {filter} = req.query;
-    const  id = req.user._id
+    const  {filter = 'Today'} = req.query;
+    const id = req.user._id
 
+    const user = await User.findById(req.user._id)
 
+    let  startDate;
+    let  endDate 
+    if(filter === 'Today'){
+        
+        startDate = moment().startOf('day');
+        endDate = moment().endOf('day');
+
+    } else if(filter === 'This Week'){
+
+        startDate = moment().startOf('week');
+        endDate = moment().endOf('week');
+
+    } else if(filter === 'This Month'){
+
+        startDate = moment().startOf('month');
+        endDate = moment().endOf('month');
+
+    } else {
+        throw new ApiError(400, "Invalid filter")
+    }
+
+    const tasks = await Task.find({
+        createdAt: {
+            $gte: startDate.toDate(),
+            $lte: endDate.toDate()
+        }
+    })
+
+    res
+    .status(200)
+    .json( new ApiResponse(200, tasks, "Tasks fetched successfully"))
 
  })
 

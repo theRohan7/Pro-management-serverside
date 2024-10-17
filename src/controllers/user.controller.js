@@ -11,7 +11,7 @@ const registerUser = asyncHandler(async (req, res) => {
     if(!name || name === ''){
         throw new ApiError(400, "Name is required")
     }
-    if(!email || email.inludes('@') === false){
+    if(!email || !email.includes('@') ){
         throw new ApiError(400, "Email is required")
     }
     if(!password || password.length < 6){
@@ -58,7 +58,7 @@ const registerUser = asyncHandler(async (req, res) => {
 const loginUser = asyncHandler(async (req, res) => {
     const { email, password } = req.body;
 
-    if(!email || email.inludes('@') === false){
+    if(!email || email === ''){
         throw new ApiError(400, "Email is required")
     }
 
@@ -86,7 +86,7 @@ const loginUser = asyncHandler(async (req, res) => {
     return res
     .status(200)
     .json(
-        new ApiResponse( 200, {user: loggedinUser, token}, "user logged in successfully." )
+        new ApiResponse( 200, {user:loggedinUser, token}, "user logged in successfully." )
     )
 })
 
@@ -108,6 +108,40 @@ const logoutUser = asyncHandler ( async (req, res) => {
     .json( new ApiResponse(200, {}, "User logged out."))
 })
 
+const changePassword = asyncHandler( async (req, res) => {
+    const { oldPassword, newPassword } = req.body;
+    const id = req.user._id
+
+    if(!oldPassword || oldPassword === ''){
+        throw new ApiError(400, "Old Password is required")
+    }
+
+    if(!newPassword || newPassword === ''){
+        throw new ApiError(400, "New Password is required")
+    }
+
+    const user = await User.findById(id)
+
+    if(!user){
+        throw new ApiError(404, "User not found")
+    }
+
+    const checkPassword = await user.isPasswordCorrect(oldPassword)
+
+    if(!checkPassword){
+        throw new ApiError(500, "Invalid user credentials")
+    }
+
+    user.password = newPassword
+    await user.save({validateBeforeSave: false})
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse( 200, {}, "Password changed successfully.")
+    )
+})
+
 
 
 
@@ -117,5 +151,5 @@ export {
     loginUser,
     logoutUser,
     // editUserProfile,
-    // changePassword
+    changePassword
 }

@@ -40,7 +40,7 @@ const userSchema = new Schema(
                 default: 0
             },
             backlogTasks:{
-                tyepe: Number,
+                type: Number,
                 default:0
             },
             todoTasks: {
@@ -59,8 +59,7 @@ const userSchema = new Schema(
                 type: Number,
                 default: 0
             }
-        }
-        
+        }  
     }, 
     {
         timestamps: true

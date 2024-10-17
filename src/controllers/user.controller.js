@@ -142,6 +142,19 @@ const changePassword = asyncHandler( async (req, res) => {
     )
 })
 
+const fetchAllUsers = asyncHandler( async (req, res) => {
+
+    const users = await User.find({},'email');
+
+    if(!users){
+       throw new ApiError(404, "No Users found")
+    }
+
+    return res
+    .status(200)
+    .json(new ApiResponse(200, users, "Users fetched successfully"))
+})
+
 
 
 
@@ -151,5 +164,6 @@ export {
     loginUser,
     logoutUser,
     // editUserProfile,
-    changePassword
+    changePassword,
+    fetchAllUsers
 }

@@ -30,7 +30,8 @@ const taskSchema = new Schema (
             type: Date,
         },
         asignee: {
-            type: String,       
+            type: Schema.Types.ObjectId,
+            ref: "User"       
         }
     }, {
         timestamps: true

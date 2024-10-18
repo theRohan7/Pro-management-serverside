@@ -1,13 +1,13 @@
 import {Router} from 'express';
 import {verifyJWT} from '../middlewares/auth.middleware.js';
-import { changeTaskStatus, createTask, deleteTask, editTask, filterTasks } from '../controllers/tasks.controller.js';
+import { changeTaskStatus, createTask, deleteTask, editTask, filterTasks, getSharedTask } from '../controllers/tasks.controller.js';
 
 
 
 const router = Router();
 
 //general Routes
-
+router.route('/shared-task/:taskId').get(getSharedTask);
 
 
 

@@ -135,6 +135,8 @@ const changePassword = asyncHandler( async (req, res) => {
     user.password = newPassword
     await user.save({validateBeforeSave: false})
 
+    const token = await user.generateToken()
+
     return res
     .status(200)
     .json(
@@ -155,6 +157,59 @@ const fetchAllUsers = asyncHandler( async (req, res) => {
     .json(new ApiResponse(200, users, "Users fetched successfully"))
 })
 
+const updateName = asyncHandler( async (req, res) => {
+    const { name } = req.body;
+    const id = req.user._id
+
+    if(!name || name === ""){
+        throw new ApiError(400, "Name is required")
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(id, { name: name }, {new: true, runValidators: true}).select("-password")
+
+    if(!updatedUser){
+        throw new ApiError(404, "something went wrong while updating user.")
+    }
+
+    const token = await updatedUser.generateToken()
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200, updatedUser, "Name updated successfully")
+    )
+
+})
+
+const updateEmail = asyncHandler( async (req, res) => {
+    const { email } = req.body;
+    const id = req.user._id
+
+    if(!email || !email.includes("@")){
+        throw new ApiError(400, "Email is required")
+    }
+
+    const user = await User.findById(id)
+
+    if(!user){
+        throw new ApiError(404, "User not found")
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(id, { email: email }, {new: true, runValidators: true}).select("-password")
+
+    if(!updatedUser){
+        throw new ApiError(404, "something went wrong while updating Email.")
+    }
+
+    const token = await updatedUser.generateToken()
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200, updatedUser, "Email updated successfully")
+    )
+})
+
 
 
 
@@ -163,7 +218,9 @@ export {
     registerUser,
     loginUser,
     logoutUser,
-    // editUserProfile,
     changePassword,
-    fetchAllUsers
+    updateName,
+    updateEmail,
+    fetchAllUsers,
+
 }

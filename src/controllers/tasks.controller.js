@@ -170,7 +170,7 @@ const changeTaskStatus = asyncHandler(async (req, res) => {
 const  editTask = asyncHandler(async (req, res) => {
 
     const { title, priority, dueDate, asigneeId, checklists } = req.body
-    const  taskId = req.params.taskId
+    const  {taskId} = req.params
     const id = req.user._id
 
     const user = await User.findById(id)
@@ -266,7 +266,7 @@ const  editTask = asyncHandler(async (req, res) => {
  })
 
  const filterTasks = asyncHandler(async (req, res) => {
-    const  {filter = 'Today'} = req.query;
+    const  {filter = 'This Week'} = req.query;
     const id = req.user._id
 
     const user = await User.findById(req.user._id)
@@ -305,6 +305,20 @@ const  editTask = asyncHandler(async (req, res) => {
 
  })
 
+ const getSharedTask = asyncHandler(async (req, res) => {
+    const {taskId} = req.params
+
+    const task = await Task.findById(taskId)
+
+    if(!task){
+        throw new ApiError(404, "Task not found")
+    }
+
+    return res
+    .status(200)
+    .json( new ApiResponse(200, task, "Task fetched successfully"))
+ })
+
 
 
 
@@ -313,5 +327,6 @@ export {
     changeTaskStatus,
     editTask,
     deleteTask,
-    filterTasks
+    filterTasks,
+    getSharedTask
 }

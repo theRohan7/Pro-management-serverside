@@ -243,7 +243,7 @@ const  editTask = asyncHandler(async (req, res) => {
 
  const deleteTask = asyncHandler(async (req, res) => {
 
-    const { taskId } = req.body
+    const { taskId } = req.params
     const id = req.user._id
 
     const user = await User.findById(id)

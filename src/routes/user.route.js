@@ -9,13 +9,14 @@ const router = Router();
 //general Routes
 
 router.route('/register').post(registerUser);
-router.route('/allUser').get(fetchAllUsers);
+
 router.route('/login').post(loginUser);
 
 
 //secured routes
 
 router.route('/logout').post(verifyJWT, logoutUser);
+router.route('/allUser').get(verifyJWT, fetchAllUsers);
 router.route('/change-password').put(verifyJWT, changePassword);
 router.route('/update-name').put(verifyJWT, updateName);
 router.route('/update-email').put(verifyJWT, updateEmail);

@@ -210,6 +210,24 @@ const updateEmail = asyncHandler( async (req, res) => {
     )
 })
 
+const userData = asyncHandler( async (req, res) => {
+
+    const id = req.user._id
+
+    const user = await User.findById(id).select("-password")
+
+    if(!user){
+        throw new ApiError(404, "User not found")
+    
+    }
+
+    return res
+    .status(200)
+    .json(
+        new ApiResponse(200, user, "User data fetched successfully")
+    )
+})
+
 
 
 
@@ -222,5 +240,5 @@ export {
     updateName,
     updateEmail,
     fetchAllUsers,
-
+    userData,
 }

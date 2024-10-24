@@ -319,6 +319,29 @@ const  editTask = asyncHandler(async (req, res) => {
     .json( new ApiResponse(200, task, "Task fetched successfully"))
  })
 
+ const taskChecklistCompletion = asyncHandler(async (req, res) => {
+
+    const { taskId, checklistIndex } = req.body;
+
+    const task = await Task.findById(taskId);
+
+    if (!task) {
+        throw new ApiError(404, "Task not found");
+    }
+
+    if(task.checklists[checklistIndex]){
+        task.checklists[checklistIndex].completed = !task.checklists[checklistIndex].completed
+    } else {
+        throw new ApiError(404, "Checklist item not found");
+    }
+
+    await task.save({ validateBeforeSave: false });
+
+    return res
+    .status(200)
+    .json( new ApiResponse(200, task, "Task checklist updated successfully"))
+ })
+
 
 
 
@@ -328,5 +351,6 @@ export {
     editTask,
     deleteTask,
     filterTasks,
-    getSharedTask
+    getSharedTask,
+    taskChecklistCompletion
 }

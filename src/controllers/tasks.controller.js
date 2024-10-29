@@ -297,7 +297,7 @@ const  editTask = asyncHandler(async (req, res) => {
             $gte: startDate.toDate(),
             $lte: endDate.toDate()
         }
-    })
+    }).populate('asignee')
 
     res
     .status(200)

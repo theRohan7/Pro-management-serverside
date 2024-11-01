@@ -23,7 +23,8 @@ const taskSchema = new Schema (
         checklists :[
             {
                 title: { type: String, required: true },
-                completed: { type: Boolean, default: false }
+                completed: { type: Boolean, default: false },
+                
             }
         ],
         dueDate: {

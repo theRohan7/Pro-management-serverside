@@ -10,6 +10,9 @@ const createTask = asyncHandler(async (req, res) => {
     const {title, priority, status, dueDate, asigneeId, checklists} = req.body
     const id = req.user._id
 
+    console.log(title, priority, status, dueDate, asigneeId, checklists);
+    
+
     if(!title || title === ''){
         throw new ApiError(400, "Title is required")
     }
@@ -40,9 +43,11 @@ const createTask = asyncHandler(async (req, res) => {
         checklists: checklists,
     })
 
-    const createdTask = await Task.findById(task._id)
+    const createdTask = await Task.findById(task._id).populate('asignee')
 
-    const asignedUser = await User.findById(asigneeId)
+    if(asigneeId !== null) {
+
+        const asignedUser = await User.findById(asigneeId)
     if(!asignedUser){
         throw new ApiError(404, "Asigned user not found")
     }
@@ -54,6 +59,10 @@ const createTask = asyncHandler(async (req, res) => {
 
     user.tasks.push(task)
     await user.save({validateBeforeSave: false})
+
+    }
+
+    
     
     let analyticsUpdate = {};
 
@@ -109,7 +118,7 @@ const changeTaskStatus = asyncHandler(async (req, res) => {
         throw new ApiError(404, "User not found")
     }   
 
-    const task = await Task.findById(taskId)
+    const task = await Task.findById(taskId).populate('asignee')
     if(!task){
         throw new ApiError(404, "Task not found")
     }
@@ -173,14 +182,20 @@ const  editTask = asyncHandler(async (req, res) => {
     const  {taskId} = req.params
     const id = req.user._id
 
+
     const user = await User.findById(id)
     if(!user){
         throw new ApiError(404, "User not found")
     } 
 
-    const task = await Task.findById(taskId)
+    const task = await Task.findById(taskId).populate('asignee');
     if(!task){
         throw new ApiError(404, "Task not found")
+    }
+
+    const asignedUser = await User.findById(asigneeId).select('-password')
+    if(!asignedUser){
+        throw new ApiError(404, "Asigned user not found") 
     }
 
     const oldPriority = task.priority
@@ -188,14 +203,11 @@ const  editTask = asyncHandler(async (req, res) => {
     task.title = title
     task.priority = priority
     task.dueDate = dueDate
-    task.asignee = asigneeId
+    task.asignee = asignedUser
     task.checklists = checklists
     await task.save({validateBeforeSave: false})
 
-    const asignedUser = await User.findById(asigneeId)
-    if(!asignedUser){
-        throw new ApiError(404, "Asigned user not found") 
-    }
+   
 
     if(!asignedUser.tasks.includes(task._id)){
         asignedUser.tasks.push(task._id);
@@ -323,7 +335,7 @@ const  editTask = asyncHandler(async (req, res) => {
 
     const { taskId, checklistIndex } = req.body;
 
-    const task = await Task.findById(taskId);
+    const task = await Task.findById(taskId).populate('asignee');
 
     if (!task) {
         throw new ApiError(404, "Task not found");

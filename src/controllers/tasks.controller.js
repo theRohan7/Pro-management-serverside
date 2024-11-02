@@ -8,10 +8,9 @@ import moment from "moment";
 
 const createTask = asyncHandler(async (req, res) => {
     const {title, priority, status, dueDate, asigneeId, checklists} = req.body
-    const id = req.user._id
-
-    console.log(title, priority, status, dueDate, asigneeId, checklists);
+    console.log(asigneeId);
     
+    const id = req.user._id
 
     if(!title || title === ''){
         throw new ApiError(400, "Title is required")
@@ -39,28 +38,25 @@ const createTask = asyncHandler(async (req, res) => {
         priority: priority,
         status: status,
         dueDate: dueDate,
-        asignee: asigneeId,
+        asignee: asigneeId || null,
         checklists: checklists,
     })
 
     const createdTask = await Task.findById(task._id).populate('asignee')
 
     if(asigneeId !== null) {
-
-        const asignedUser = await User.findById(asigneeId)
-    if(!asignedUser){
-        throw new ApiError(404, "Asigned user not found")
+        await User.findByIdAndUpdate(
+            asigneeId,
+            { $addToSet: { tasks: task._id } },
+            { new: true, validateBeforeSave: false }
+        );
     }
 
-    if(!asignedUser.tasks.includes(task._id)){
-        asignedUser.tasks.push(task._id);
-        await asignedUser.save({validateBeforeSave: false})
-    }
-
-    user.tasks.push(task)
-    await user.save({validateBeforeSave: false})
-
-    }
+    await User.findByIdAndUpdate(
+        id,
+        { $addToSet: { tasks: task._id } },
+        { new: true, validateBeforeSave: false }
+    );
 
     
     
@@ -268,7 +264,40 @@ const  editTask = asyncHandler(async (req, res) => {
         throw new ApiError(404, "Task not found")
     }
 
-    await Task.findByIdAndDelete(taskId)
+    let analyticsUpdate = {};
+    switch (task.priority) {
+      case 'Low Priority':
+        analyticsUpdate['analytics.lowPriorityTasks'] = -1;
+        break;
+      case 'Moderate Priority':
+        analyticsUpdate['analytics.moderatePriorityTasks'] = -1;
+        break;
+      case 'High Priority':
+        analyticsUpdate['analytics.highPriorityTasks'] = -1;
+        break;
+    }
+
+    switch (task.status) {
+        case 'Backlog':
+            analyticsUpdate['analytics.backlogTasks'] = -1;
+            break;
+        case 'Todo':
+            analyticsUpdate['analytics.todoTasks'] = -1;
+            break;
+        case 'In Progress':
+            analyticsUpdate['analytics.inProgressTasks'] = -1;
+            break;
+        case 'Done':
+            analyticsUpdate['analytics.doneTasks'] = -1;
+            break;
+    }
+  
+
+    await Task.findByIdAndDelete(taskId);
+
+  await User.findByIdAndUpdate(id, {
+    $inc: analyticsUpdate,
+  });
 
     return res
     .status(200)
@@ -281,35 +310,56 @@ const  editTask = asyncHandler(async (req, res) => {
     const  {filter = 'This Week'} = req.query;
     const id = req.user._id
 
-    const user = await User.findById(req.user._id)
+
 
     let  startDate;
     let  endDate 
-    if(filter === 'Today'){
-        
-        startDate = moment().startOf('day');
-        endDate = moment().endOf('day');
-
-    } else if(filter === 'This Week'){
-
-        startDate = moment().startOf('week');
-        endDate = moment().endOf('week');
-
-    } else if(filter === 'This Month'){
-
-        startDate = moment().startOf('month');
-        endDate = moment().endOf('month');
-
-    } else {
-        throw new ApiError(400, "Invalid filter")
+    switch (filter) {
+        case 'Today':
+            startDate = moment().startOf('day');
+            endDate = moment().endOf('day');
+            break;
+        case 'This Week':
+            startDate = moment().startOf('week');
+            endDate = moment().endOf('week');
+            break;
+        case 'This Month':
+            startDate = moment().startOf('month');
+            endDate = moment().endOf('month');
+            break;
     }
 
     const tasks = await Task.find({
+        $or: [
+            { owner: id },     
+            { asignee: id }   
+        ],
         createdAt: {
             $gte: startDate.toDate(),
             $lte: endDate.toDate()
         }
-    }).populate('asignee')
+    }).populate([
+        {
+            path: 'asignee',
+            select: 'name email _id'
+        },
+        {
+            path: 'owner',
+            select: 'name email'
+        }
+    ]);
+
+    if (!tasks || tasks.length === 0) {
+        return res
+        .status(200)
+        .json(new ApiResponse(
+            200, 
+            [],
+            "No tasks found for the selected period"
+        ));
+    }
+
+
 
     res
     .status(200)
